@@ -1,0 +1,4 @@
+commands = ["{pyexe} -m pip install -Ur requirements.txt", "{install}"]
+
+[[packages]]
+name = "typing_extensions"
