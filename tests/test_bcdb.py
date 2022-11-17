@@ -565,7 +565,7 @@ class TestDatabase:
         try:
             dir_ = tmp_path / "fi;;le"
             dir_.mkdir()
-        except Exception:
+        except Exception:  # pragma: no cover
             pytest.skip('OS doesn\'t allow ";;" in paths')
 
     @staticmethod
