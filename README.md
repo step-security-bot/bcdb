@@ -1,9 +1,8 @@
 # Black Cat DataBase
 
 [![Hits-of-Code](https://hitsofcode.com/github/koviubi56/bcdb?branch=main)](https://hitsofcode.com/github/koviubi56/bcdb/view?branch=main)
-<!-- ![Codacy grade](https://img.shields.io/codacy/grade/42424fcd258a44f3a0303ca6ca535f67) -->
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/103515bdc600439d98a0f1ea1f767c71)](https://www.codacy.com/gh/koviubi56/bcdb/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koviubi56/bcdb&amp;utm_campaign=Badge_Grade)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/koviubi56/bcdb)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/koviubi56/bcdb/main.svg)](https://results.pre-commit.ci/latest/github/koviubi56/bcdb/main)
 ![CircleCI](https://img.shields.io/circleci/build/github/koviubi56/bcdb)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![semantic-release](https://img.shields.io/badge/%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)
