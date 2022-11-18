@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Koviubi56"
 __email__ = "koviubi56@duck.com"
 __license__ = "GNU GPLv3"
@@ -518,19 +518,21 @@ class Attribute:
             self.table.verify_from(obj, self)
 
 
-@dataclasses.dataclass(order=True, frozen=True, slots=True)
+@dataclasses.dataclass(order=True, slots=True)
 class Database:
     """
     The database class.
 
     Args:
-        directory (pathlib.Path): The database directory. The table files will
-        be put in this directory.
+        directory (pathlib.Path | str): The database directory. The table
+        files will be put in this directory.
     """
 
-    directory: pathlib.Path
+    directory: pathlib.Path | str
 
     def __post_init__(self) -> None:
+        if isinstance(self.directory, str):
+            self.directory = pathlib.Path(self.directory)
         if not self.directory.exists():
             raise FileNotFoundError(self.directory)
         if not self.directory.is_dir():
@@ -547,6 +549,7 @@ class Database:
         Returns:
             list[Table]: A list of tables in the database.
         """
+        assert isinstance(self.directory, pathlib.Path)
         return [Table(file) for file in self.directory.iterdir()]
 
     def add_table(
@@ -571,6 +574,7 @@ class Database:
         Returns:
             Table: The new table.
         """
+        assert isinstance(self.directory, pathlib.Path)
         assert all(
             val in stringlib.ascii_letters + stringlib.digits
             for val in table_name
@@ -601,6 +605,7 @@ class Database:
         Args:
             table_name (str): The table's name to remove.
         """
+        assert isinstance(self.directory, pathlib.Path)
         assert all(
             val in stringlib.ascii_letters + stringlib.digits
             for val in table_name
