@@ -198,14 +198,48 @@ class Table:
             with self.file.open("a", encoding="utf-8") as file:
                 file.write(f"{';;'.join(str(column) for column in row)}\n")
 
+    def remove_row(self, where: Where, must_remove: bool = True) -> bool:
+        """
+        Remove the first row where `where(row)` is truthy.
+
+        Args:
+            where (Callable[[tuple[Any, ...]], bool]): A function that accepts
+            a tuple as a positional argument, and returns a boolean.
+            must_remove (bool, optional): If this is True, and no rows were
+            removed, an AssertionError will be raised. Defaults to True.
+
+        Raises:
+            AssertionError: If `must_remove` is True and no rows were removed
+
+        Returns:
+            bool: True if a row was removed, False otherwise
+        """
+        rows = self.get_rows()
+        changes = False
+        new_rows: list[tuple[Any, ...]] = []
+        for row in rows:
+            if (not changes) and where(row):
+                # remove row
+                changes = True
+            else:
+                # row stays
+                new_rows.append(row)
+        if must_remove and (not changes):
+            raise AssertionError(
+                "invalid row removal: must_remove but nothing was removed"
+            )
+        if changes:
+            # ^ If nothing is removed, don't waste time and energy
+            self.write_rows(new_rows, i_know_what_im_doing=True)
+        return changes
+
     def remove_rows(self, where: Where, *, limit: int = 1000) -> int:
         """
         Remove all rows where `where(row)` is truthy.
 
         Args:
             where (Callable[[tuple[Any, ...]], bool]): A function that accepts
-            a tuple as a positional argument, and returns a boolean or raises
-            an AssertionError.
+            a tuple as a positional argument, and returns a boolean.
             limit (int, optional): The limit. If the number of removed rows
             exceeds this limit, the operation will be aborted (it won't even
             start). Defaults to 1000.
@@ -220,17 +254,15 @@ class Table:
         num_of_changes = 0
         new_rows: list[tuple[Any, ...]] = []
         for row in rows:
-            try:
-                where_rv = where(row)
-            except AssertionError:
-                where_rv = True
-            if where_rv:
+            if where(row):
+                # remove row
                 num_of_changes += 1
             else:
+                # row stays
                 new_rows.append(row)
         if num_of_changes > limit:
             raise AssertionError(
-                f"invalid row removing: exceeded the limit ({limit}) with"
+                f"invalid removal of rows: exceeded the limit ({limit}) with"
                 f" {num_of_changes} number of rows removed. Modify the limit"
                 " argument to allow big removal of rows."
             )
