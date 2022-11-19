@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-11-19
+
 ## Added
 
 - **! Added `Table.remove_row(self: Self@Table, where: Where, must_remove: bool = True) -> bool`.**
