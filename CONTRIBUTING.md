@@ -134,7 +134,7 @@ How to report them can be found in the [SECURITY.md](SECURITY.md) file.
 - _"contributor"_, _"you"_, _"I"_, and _"me"_ refer to the person who made the contribution.
 - _"DCO"_ refers to the Developer Certificate of Origin.
 
-By contributing, committing, and/or pushing to our project you MUST fully understand and fully agree to the whole DCO.
+By contributing to our project you MUST fully understand and fully agree to the whole DCO.
 
 Contributing to our project in any way means that you fully understand and fully agree to the whole DCO.
 
