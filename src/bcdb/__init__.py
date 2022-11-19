@@ -170,6 +170,7 @@ class Table:
         return rv
 
     def add_row(self, row: tuple[Any, ...], *, lock: bool = True) -> None:
+        # TODO(koviubi56): add an `add_rows` which is like list.extend()
         """
         Add a row to the table.
 
@@ -197,7 +198,7 @@ class Table:
             with self.file.open("a", encoding="utf-8") as file:
                 file.write(f"{';;'.join(str(column) for column in row)}\n")
 
-    def remove_row(self, where: Where, *, limit: int = 1000) -> int:
+    def remove_rows(self, where: Where, *, limit: int = 1000) -> int:
         """
         Remove all rows where `where(row)` is truthy.
 
