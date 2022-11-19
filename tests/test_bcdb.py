@@ -316,28 +316,6 @@ class TestTable:
         assert all(row == (False,) for row in rows)
 
     @staticmethod
-    def test_remove_rows_assertionerror(tmp_path: pathlib.Path) -> None:
-        def func(t: tuple[bool]) -> None:
-            assert t[0]
-
-        db = bcdb.Database(tmp_path)
-        table = db.add_table(
-            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.BOOLEAN)]
-        )
-        table.add_row((True,))
-        table.add_row((False,))
-        table.add_row((True,))
-        table.add_row((True,))
-        table.add_row((False,))
-        table.add_row((False,))
-        table.add_row((True,))
-        table.add_row((False,))
-        table.remove_rows(func)
-        rows = table.get_rows()
-        assert len(rows) == 4
-        assert all(row == (True,) for row in rows)
-
-    @staticmethod
     def test_remove_rows_limit(tmp_path: pathlib.Path) -> None:
         db = bcdb.Database(tmp_path)
         table = db.add_table(
