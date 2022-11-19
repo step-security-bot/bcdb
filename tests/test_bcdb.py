@@ -297,6 +297,59 @@ class TestTable:
             table.get_rows()
 
     @staticmethod
+    def test_remove_rows(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.BOOLEAN)]
+        )
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.remove_rows(lambda t: t[0])
+        rows = table.get_rows()
+        assert len(rows) == 4
+        assert all(row == (False,) for row in rows)
+
+    @staticmethod
+    def test_remove_rows_assertionerror(tmp_path: pathlib.Path) -> None:
+        def func(t: tuple[bool]) -> None:
+            assert t[0]
+
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.BOOLEAN)]
+        )
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.remove_rows(func)
+        rows = table.get_rows()
+        assert len(rows) == 4
+        assert all(row == (True,) for row in rows)
+
+    @staticmethod
+    def test_remove_rows_limit(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.BOOLEAN)]
+        )
+        with pytest.raises(
+            AssertionError,
+            match=r"exceeded the limit \(-1\) with 0 number of rows removed\.",
+        ):
+            table.remove_rows(lambda _: True, limit=-1)
+
+    @staticmethod
     def test_verify_requirements(tmp_path: pathlib.Path) -> None:
         db = bcdb.Database(tmp_path)
         attrs = [
@@ -556,6 +609,8 @@ class TestDatabase:
     def test_post_init(tmp_path: pathlib.Path) -> None:
         bcdb.Database(tmp_path)
 
+        assert bcdb.Database(str(tmp_path)).directory == tmp_path
+
     @staticmethod
     def test_post_init_bad(tmp_path: pathlib.Path, file: pathlib.Path) -> None:
         with pytest.raises(FileNotFoundError):
@@ -625,6 +680,17 @@ class TestDatabase:
             db.add_table(
                 "cool", [bcdb.Attribute("b", bcdb.AttributeType.STRING)]
             )
+
+    @staticmethod
+    def test_get_table(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        t1 = db.add_table(
+            "t1", [bcdb.Attribute("a", bcdb.AttributeType.FLOAT)]
+        )
+
+        assert db.get_table("t1") == t1
+        with pytest.raises(AssertionError):
+            db.get_table("t2")
 
     @staticmethod
     def test_remove_table(tmp_path: pathlib.Path) -> None:
