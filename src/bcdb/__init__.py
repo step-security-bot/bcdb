@@ -24,18 +24,21 @@ __copyright__ = "Copyright (C) 2022 Koviubi56"
 __description__ = "Black Cat DataBase is a simple database."
 __url__ = "https://github.com/koviubi56/bcdb"
 
+import contextlib
 import dataclasses
 import enum
 import functools
 import pathlib
 import string as stringlib
 import threading
-from typing import Any
+from typing import Any, Callable
 
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
 if not __debug__:
     raise Exception("BCDB cannot be used with the -O flag")
+
+Where: TypeAlias = Callable[[tuple[Any, ...]], bool]
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -166,7 +169,7 @@ class Table:
             column_ = []
         return rv
 
-    def add_row(self, row: tuple[Any, ...]) -> None:
+    def add_row(self, row: tuple[Any, ...], *, lock: bool = True) -> None:
         """
         Add a row to the table.
 
@@ -180,6 +183,8 @@ class Table:
         Args:
             row (tuple[Any, ...]): The row. Each element in the tuple
             represents a column.
+            lock (bool, optional): Acquire lock. Don't change this!
+            ! [WARNING] DO NOT CHANGE THIS! THIS IS ONLY USED INTERNALLY!
         """
         assert len(row) == len(self.attributes), (
             f"invalid value for table {self.name}: invalid number of columns,"
@@ -188,9 +193,81 @@ class Table:
         for idx, column in enumerate(row):
             attr = self.attributes[idx]
             attr.verify_before_writing(column)
-        with self.lock:
+        with self.lock if lock else contextlib.nullcontext():
             with self.file.open("a", encoding="utf-8") as file:
                 file.write(f"{';;'.join(str(column) for column in row)}\n")
+
+    def remove_row(self, where: Where, *, limit: int = 1000) -> int:
+        """
+        Remove all rows where `where(row)` is truthy.
+
+        Args:
+            where (Callable[[tuple[Any, ...]], bool]): A function that accepts
+            a tuple as a positional argument, and returns a boolean or raises
+            an AssertionError.
+            limit (int, optional): The limit. If the number of removed rows
+            exceeds this limit, the operation will be aborted (it won't even
+            start). Defaults to 1000.
+
+        Raises:
+            AssertionError: If the number of removed rows exceeded `limit`
+
+        Returns:
+            int: The number of rows removed.
+        """
+        rows = self.get_rows()
+        num_of_changes = 0
+        new_rows: list[tuple[Any, ...]] = []
+        for row in rows:
+            try:
+                where_rv = where(row)
+            except AssertionError:
+                where_rv = False
+            if where_rv:
+                num_of_changes += 1
+            else:
+                new_rows.append(row)
+        if num_of_changes > limit:
+            raise AssertionError(
+                f"invalid row removing: exceeded the limit ({limit}) with"
+                f" {num_of_changes} number of rows removed. Modify the limit"
+                " argument to allow big removal of rows."
+            )
+        if num_of_changes > 0:
+            # ^ If nothing is removed, don't waste time and energy
+            self.write_rows(new_rows, i_know_what_im_doing=True)
+        return num_of_changes
+
+    def write_rows(
+        self,
+        rows: list[tuple[Any, ...]],
+        *,
+        i_know_what_im_doing: bool = False,
+    ) -> None:  # sourcery skip: simplify-boolean-comparison
+        """
+        Remove ALL rows and replace them with `rows`. Usage is discouraged!
+        ! [WARNING] ONLY USE THIS IF YOU KNOW WHAT YOU ARE DOING!
+
+        Args:
+            rows (list[tuple[Any, ...]]): The rows that will be in the file.
+            i_know_what_im_doing (bool, optional): Must be True to use this
+            function. Defaults to False.
+        """
+        assert (
+            i_know_what_im_doing is True
+        ), "You don't know what you are doing."
+        with self.lock:
+            # remove ALL rows
+            with self.file.open("w+", encoding="utf-8") as file:
+                # get the first line ("BCDB ...")
+                first_line = file.readlines()[0]
+                # and then write that to the file
+                file.write(first_line + "\n")
+
+            # we are still in the lock, and we do lock=False, because other
+            # operations might be waiting, but this must finish first
+            for row in rows:
+                self.add_row(row, lock=False)
 
     def verify_from(self, obj: Any, attribute: "str | Attribute") -> None:
         """

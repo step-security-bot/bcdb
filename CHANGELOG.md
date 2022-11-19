@@ -8,7 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Added
 
+- **! Added `Table.remove_row(self: Self@Table, where: Callable[[tuple[Any, ...]], bool], *, limit: int = 1000) -> int`.**
 - **Added `Database.get_table(self: Self@Database, table_name: str) -> Table` which returns an existing table.**
+- Added `Table.write_rows(self: Self@Table, rows: list[tuple[Any, ...]], *, i_know_what_im_doing: bool = False) -> None`. Usage is discouraged!
+- Added argument `lock` to `Table.add_row`. Don't change it!
 
 ## [0.1.1] - 2022-11-18
 
