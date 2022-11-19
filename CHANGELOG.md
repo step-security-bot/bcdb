@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Added
+
+- **Added `Database.get_table(self: Self@Database, table_name: str) -> Table` which returns an existing table.**
+
 ## [0.1.1] - 2022-11-18
 
 ## Added

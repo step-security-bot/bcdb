@@ -594,6 +594,26 @@ class Database:
             attr.table = table
         return table
 
+    def get_table(self, table_name: str) -> Table:
+        """
+        Get the table with the name `table_name`.
+
+        Args:
+            table_name (str): The table's name to return.
+
+        Raises:
+            AssertionError: If the table isn't found.
+
+        Returns:
+            Table: The table.
+        """
+        for table in self.tables:
+            if table_name.casefold() == table.name.casefold():
+                return table
+        raise AssertionError(
+            f"invalid table: no table found with name {table_name!r}"
+        )
+
     def remove_table(self, table_name: str) -> None:
         """
         Remove the table.
