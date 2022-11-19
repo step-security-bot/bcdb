@@ -297,6 +297,63 @@ class TestTable:
             table.get_rows()
 
     @staticmethod
+    def test_remove_row_1(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.BOOLEAN)]
+        )
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.remove_row(lambda t: t[0])
+        rows = table.get_rows()
+        assert rows == [
+            (False,),
+            (True,),
+            (True,),
+            (False,),
+            (False,),
+            (True,),
+            (False,),
+        ]
+
+    @staticmethod
+    def test_remove_row_2(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.BOOLEAN)]
+        )
+        table.add_row((False,))
+        table.add_row((False,))
+        table.add_row((True,))
+        table.add_row((False,))
+        table.add_row((False,))
+        table.remove_row(lambda t: t[0])
+        rows = table.get_rows()
+        assert rows == [
+            (False,),
+            (False,),
+            (False,),
+            (False,),
+        ]
+
+    @staticmethod
+    def test_remove_row_bad(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "t", [bcdb.Attribute("a", bcdb.AttributeType.FLOAT)]
+        )
+        with pytest.raises(
+            AssertionError, match=r"must_remove but nothing was removed"
+        ):
+            table.remove_row(lambda _: True)
+
+    @staticmethod
     def test_remove_rows(tmp_path: pathlib.Path) -> None:
         db = bcdb.Database(tmp_path)
         table = db.add_table(
@@ -412,11 +469,16 @@ class TestAttribute:
 
     @staticmethod
     def test_post_init_bad() -> None:
-        with pytest.raises(AssertionError):
+        with pytest.raises(AssertionError, match=r"string contains separator"):
             bcdb.Attribute(";;", bcdb.AttributeType.BOOLEAN)
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError, match=r"must be instance of AttributeType"
+        ):
             bcdb.Attribute("goodname", "something else")  # type: ignore
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError,
+            match=r"must be None or instance of AttributeRequirements",
+        ):
             bcdb.Attribute(
                 "goodname",
                 bcdb.AttributeType.BOOLEAN,
@@ -436,29 +498,33 @@ class TestAttribute:
         table2.attributes[0].check_from()
 
     @staticmethod
-    def test_check_from_bad(tmp_path: pathlib.Path) -> None:
-        with pytest.raises(AssertionError):
+    def test_check_from_bad_1(tmp_path: pathlib.Path) -> None:
+        with pytest.raises(
+            AssertionError,
+            match=r"doesn't have \.from_ \(check_from requires \.from_\)",
+        ):
             bcdb.Attribute("attr", bcdb.AttributeType.INTEGER).check_from()
-        with pytest.raises(AssertionError):
-            bcdb.Attribute(
-                "attr", bcdb.AttributeType.INTEGER, from_="idk"
-            ).check_from()
+
         db = bcdb.Database(tmp_path)
         attr = bcdb.Attribute("attr", bcdb.AttributeType.INTEGER, from_="t1")
         db.add_table(
             "t1",
             [attr],
         )
-        with pytest.raises(AssertionError):
+        with pytest.raises(AssertionError, match=r"from cannot be this table"):
             db.tables[0].attributes[0].check_from()
         db.remove_table("t1")
         attr = bcdb.Attribute("attr", bcdb.AttributeType.INTEGER, from_="idk")
-        db.add_table(
-            "t1",
-            [attr],
+
+    @staticmethod
+    def test_check_from_bad_2(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "t",
+            [bcdb.Attribute("attr", bcdb.AttributeType.INTEGER, from_="idk")],
         )
-        with pytest.raises(AssertionError):
-            db.tables[0].attributes[0].check_from()
+        with pytest.raises(AssertionError, match=r"table 'idk' doesn't exist"):
+            table.attributes[0].check_from()
 
     @staticmethod
     def test_to_str() -> None:
