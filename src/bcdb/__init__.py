@@ -223,7 +223,7 @@ class Table:
             try:
                 where_rv = where(row)
             except AssertionError:
-                where_rv = False
+                where_rv = True
             if where_rv:
                 num_of_changes += 1
             else:
@@ -259,11 +259,12 @@ class Table:
         ), "You don't know what you are doing."
         with self.lock:
             # remove ALL rows
-            with self.file.open("w+", encoding="utf-8") as file:
+            with self.file.open("r", encoding="utf-8") as file:
                 # get the first line ("BCDB ...")
                 first_line = file.readlines()[0]
+            with self.file.open("w", encoding="utf-8") as file:
                 # and then write that to the file
-                file.write(first_line + "\n")
+                file.write(first_line)
 
             # we are still in the lock, and we do lock=False, because other
             # operations might be waiting, but this must finish first
@@ -686,7 +687,7 @@ class Database:
             Table: The table.
         """
         for table in self.tables:
-            if table_name.casefold() == table.name.casefold():
+            if table_name == table.name:
                 return table
         raise AssertionError(
             f"invalid table: no table found with name {table_name!r}"
