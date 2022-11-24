@@ -196,7 +196,7 @@ class Table:
         """
         return self._contains(attribute_name, attribute_value, False)
 
-    def get_rows(self) -> list[tuple[Any, ...]]:
+    def get_rows(self, *, lock: bool = True) -> list[tuple[Any, ...]]:
         """
         Get all rows in the table.
 
@@ -208,12 +208,17 @@ class Table:
             Other exceptions may be raised by other functions
             (Attribute.convert_and_verify) called by this function.
 
+        Args:
+            lock (bool, optional): Acquire lock before reading the file. This
+            is only changed internally, please don't use this argument.
+            Defaults to True.
+
         Returns:
             list[tuple[Any, ...]]: All rows in the table. This is a list of
             tuples. The tuples represent rows. All of the tuples should have
             the same length.
         """
-        with self.lock:
+        with self.lock if lock else contextlib.nullcontext():
             contents = self.file.read_text(encoding="utf-8")
         assert contents.startswith(
             "BCDB "
@@ -396,6 +401,58 @@ class Table:
             # operations might be waiting, but this must finish first
             for row in rows:
                 self.add_row(row, lock=False)
+
+    def map(  # noqa: A003
+        self,
+        func: Callable[[tuple[Any, ...]], tuple[Any, ...] | None],
+        *,
+        write: bool = False,
+    ) -> list[tuple[Any, ...]]:
+        """
+        Use `func` on all rows (like the built-in `map()`).
+
+        Args:
+            func (Callable[[tuple[Any, ...]], tuple[Any, ...]  |  None]): The
+            function to call. It must return a tuple or None. If it returns
+            None, then that row is considered to be removed (it will only be
+            actually removed if `write=True`).
+            write (bool, optional): Write the new values to the database. Only
+            use this if you know what you are doing! Defaults to False.
+
+        Raises:
+            AssertionError: if the return value of `func` is a tuple, but its
+            length is not the same as the number of attributes
+            AssertionError: if the return value of `func` is not a tuple, and
+            isn't None
+
+        Returns:
+            list[tuple[Any, ...]]: The new rows
+        """
+        with self.lock:
+            # * the actual map part
+            new_rows: list[tuple[Any, ...]] = []
+            for row in self.get_rows(lock=False):
+                new_row = func(row)
+                if new_row is None:
+                    pass
+                elif isinstance(new_row, tuple):
+                    assert len(new_row) == len(self.attributes), (
+                        "invalid return value returned by map function:"
+                        f" tuple's ({new_row}) length ({len(new_row)}) must be"
+                        " the same as the number of arguments"
+                        f" ({len(self.attributes)})"
+                    )
+                    new_rows.append(new_row)
+                else:
+                    raise AssertionError(
+                        "unknown return value returned by map function:"
+                        f" {new_row!r}, must be tuple or None"
+                    )
+            # * the writing part
+            if write:
+                self.write_rows(new_rows, i_know_what_im_doing=True)
+            # * and return
+            return new_rows
 
     def verify_from(self, obj: Any, attribute: "str | Attribute") -> None:
         """
