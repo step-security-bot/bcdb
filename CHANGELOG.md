@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Added
+
+- **! Added `Table.contains(self: Self@Table, attribute_name: str, attribute_value: Any) -> bool`.**
+- **! Added `Table.not_contains(self: Self@Table, attribute_name: str, attribute_value: Any) -> bool`.**
+- Added `Table.get_attribute_index(self: Self@Table, name: str) -> int`.
+
 ## [0.2.0] - 2022-11-19
 
 ## Added

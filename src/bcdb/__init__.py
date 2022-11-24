@@ -124,6 +124,78 @@ class Table:
             f"invalid attribute with name {name}: doesn't exist"
         )
 
+    def get_attribute_index(self, name: str) -> int:
+        """
+        Get the attribute's index.
+
+        Args:
+            name (str): The attribute's name
+
+        Raises:
+            AssertionError: if the attribute is not found
+
+        Returns:
+            int: The attribute's index within `self.attributes`
+        """
+        try:
+            return self.attributes.index(self.get_attribute(name))
+        except ValueError as exc:
+            raise AssertionError(
+                f"invalid attribute with name {name}: doesn't exist"
+            ) from exc
+
+    def _contains(
+        self, attribute_name: str, attribute_value: Any, rv_if_found: bool
+    ) -> bool:
+        # Internal function, please use `.contains()` and `.not_contains()`
+        # instead.
+        attr_idx = self.get_attribute_index(attribute_name)
+        for rownum, row in enumerate(self.get_rows(), 2):
+            try:
+                column = row[attr_idx]
+            except IndexError as exc:
+                raise AssertionError(
+                    f"invalid row at line {rownum}: doesn't have a column"
+                    f" {attr_idx} (attribute {attribute_name})"
+                ) from exc
+            if column == attribute_value:
+                return rv_if_found
+        return not rv_if_found
+
+    def contains(self, attribute_name: str, attribute_value: Any) -> bool:
+        """
+        Check if any rows's `attribute_name` column has `attribute_value`.
+
+        Args:
+            attribute_name (str): The attribute's (column's) name
+            attribute_value (Any): The value to search for.
+
+        Raises:
+            AssertionError: If a row doesn't have that column
+
+        Returns:
+            bool: True if any rows contain `attribute_value` at the attribute
+            with the name `attribute_name`, False otherwise
+        """
+        return self._contains(attribute_name, attribute_value, True)
+
+    def not_contains(self, attribute_name: str, attribute_value: Any) -> bool:
+        """
+        Check if no rows's `attribute_name` column has `attribute_value`.
+
+        Args:
+            attribute_name (str): The attribute's (column's) name
+            attribute_value (Any): The value to search for.
+
+        Raises:
+            AssertionError: If a row doesn't have that column
+
+        Returns:
+            bool: False if any rows contain `attribute_value` at the attribute
+            with the name `attribute_name`, True otherwise
+        """
+        return self._contains(attribute_name, attribute_value, False)
+
     def get_rows(self) -> list[tuple[Any, ...]]:
         """
         Get all rows in the table.
