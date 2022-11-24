@@ -31,7 +31,7 @@ import functools
 import pathlib
 import string as stringlib
 import threading
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from typing_extensions import Self, TypeAlias
 
@@ -242,7 +242,6 @@ class Table:
         return rv
 
     def add_row(self, row: tuple[Any, ...], *, lock: bool = True) -> None:
-        # TODO(koviubi56): add an `add_rows` which is like list.extend()
         """
         Add a row to the table.
 
@@ -269,6 +268,29 @@ class Table:
         with self.lock if lock else contextlib.nullcontext():
             with self.file.open("a", encoding="utf-8") as file:
                 file.write(f"{';;'.join(str(column) for column in row)}\n")
+
+    def add_rows(
+        self, rows: Iterable[tuple[Any, ...]], *, lock: bool = True
+    ) -> None:
+        """
+        Add multiple rows (like `list.extend()`).
+
+        Raises:
+            AssertionError: If `self.add_row` raises
+
+        Args:
+            rows (Iterable[tuple[Any, ...]]): The rows. Each item (tuple) is
+            one row.
+            lock (bool, optional): Same as in `self.add_row`. Defaults to True.
+        """
+        for rownum, row in enumerate(rows):
+            try:
+                self.add_row(row, lock=lock)
+            except AssertionError as exc:
+                raise AssertionError(
+                    f"invalid row for add_rows at index {rownum} ({row}):"
+                    f" {exc}"
+                ) from exc
 
     def remove_row(self, where: Where, must_remove: bool = True) -> bool:
         """
