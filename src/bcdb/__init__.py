@@ -134,6 +134,9 @@ class Table:
         Raises:
             AssertionError: if the attribute is not found
 
+            Other exceptions may be raised by other
+            functions (get_attribute) called by this function.
+
         Returns:
             int: The attribute's index within `self.attributes`
         """
@@ -173,6 +176,10 @@ class Table:
         Raises:
             AssertionError: If a row doesn't have that column
 
+            Other exceptions may be raised by other
+            functions (get_attribute_index, get_rows) called by this
+            function.
+
         Returns:
             bool: True if any rows contain `attribute_value` at the attribute
             with the name `attribute_name`, False otherwise
@@ -189,6 +196,10 @@ class Table:
 
         Raises:
             AssertionError: If a row doesn't have that column
+
+            Other exceptions may be raised by other
+            functions (get_attribute_index, get_rows) called by this
+            function.
 
         Returns:
             bool: False if any rows contain `attribute_value` at the attribute
@@ -310,6 +321,10 @@ class Table:
         Raises:
             AssertionError: If `must_remove` is True and no rows were removed
 
+            Other exceptions may be raised by other
+            functions (get_rows, write_rows) called by this
+            function.
+
         Returns:
             bool: True if a row was removed, False otherwise
         """
@@ -346,6 +361,10 @@ class Table:
         Raises:
             AssertionError: If the number of removed rows exceeded `limit`
 
+            Other exceptions may be raised by other
+            functions (get_rows, write_rows) called by this
+            function.
+
         Returns:
             int: The number of rows removed.
         """
@@ -379,6 +398,10 @@ class Table:
         """
         Remove ALL rows and replace them with `rows`. Usage is discouraged!
         ! [WARNING] ONLY USE THIS IF YOU KNOW WHAT YOU ARE DOING!
+
+        Raises:
+            Exceptions may be raised by other functions (add_row) called by
+            this function.
 
         Args:
             rows (list[tuple[Any, ...]]): The rows that will be in the file.
@@ -425,6 +448,10 @@ class Table:
             AssertionError: if the return value of `func` is not a tuple, and
             isn't None
 
+            Other exceptions may be raised by other
+            functions (get_rows, write_rows) called by this
+            function.
+
         Returns:
             list[tuple[Any, ...]]: The new rows
         """
@@ -453,6 +480,33 @@ class Table:
                 self.write_rows(new_rows, i_know_what_im_doing=True)
             # * and return
             return new_rows
+
+    def filter(  # noqa: A003
+        self, func: Callable[[tuple[Any, ...]], bool], *, write: bool = False
+    ) -> list[tuple[Any, ...]]:
+        """
+        Retain rows where `func(row)` is truthy (like the built-in `filter()`).
+
+        Args:
+            func (Callable[[tuple[Any, ...]], bool]): The function to call. It
+            must return a bool. If it returns False, then that row is
+            considered to be removed (it will only be actually removed if
+            `write=True`).
+            write (bool, optional): Write the retained values to the database.
+            Only use this if you know what you are doing! Defaults to False.
+
+        Raises:
+            Exceptions may be raised by other functions (map) called by this
+            function.
+
+        Returns:
+            list[tuple[Any, ...]]: The new rows
+        """
+
+        def _func(row: tuple[Any, ...]) -> tuple[Any, ...] | None:
+            return (row) if (func(row)) else (None)
+
+        return self.map(_func, write=write)
 
     def verify_from(self, obj: Any, attribute: "str | Attribute") -> None:
         """
