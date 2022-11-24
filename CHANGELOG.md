@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **! Added `Table.not_contains(self: Self@Table, attribute_name: str, attribute_value: Any) -> bool`.**
 - **! Added `Table.map(self: Self@Table, func: (tuple[Any, ...]) -> (tuple[Any, ...] | None), *, write: bool = False) -> list[tuple[Any, ...]]`.**
 - **! Added `Table.filter(self: Self@Table, func: (tuple[Any, ...]) -> bool, *, write: bool = False) -> list[tuple[Any, ...]]`.**
+- **! Added `Table.contains_row(self: Self@Table, row: tuple[Any, ...]) -> bool`.**
+- **! Added `Table.not_contains_row(self: Self@Table, row: tuple[Any, ...]) -> bool`.**
 - Added `Table.add_rows(self: Self@Table, rows: Iterable[tuple[Any, ...]], *, lock: bool = True) -> None`.
 - Added `Table.get_attribute_index(self: Self@Table, name: str) -> int`.
 - Added argument `lock` to `Table.get_rows`. Don't change it!

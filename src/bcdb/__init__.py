@@ -207,6 +207,39 @@ class Table:
         """
         return self._contains(attribute_name, attribute_value, False)
 
+    def _contains_row(self, row: tuple[Any, ...], rv_if_found: bool) -> bool:
+        # Internal function, please use `.contains_row()` and
+        # `.not_contains_row()` instead
+        # sourcery skip: use-next
+        for got_row in self.get_rows():
+            if got_row == row:
+                return rv_if_found
+        return not rv_if_found
+
+    def contains_row(self, row: tuple[Any, ...]) -> bool:
+        """
+        Return True if `row` is in the table.
+
+        Args:
+            row (tuple[Any, ...]): The row to look out for.
+
+        Returns:
+            bool: True if `row` is in the table, False otherwise.
+        """
+        return self._contains_row(row, True)
+
+    def not_contains_row(self, row: tuple[Any, ...]) -> bool:
+        """
+        Return False if `row` is in the table.
+
+        Args:
+            row (tuple[Any, ...]): The row to look out for.
+
+        Returns:
+            bool: False if `row` is in the table, True otherwise.
+        """
+        return self._contains_row(row, False)
+
     def get_rows(self, *, lock: bool = True) -> list[tuple[Any, ...]]:
         """
         Get all rows in the table.
