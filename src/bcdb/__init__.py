@@ -339,7 +339,8 @@ class Table:
         with self.lock if lock else contextlib.nullcontext():
             with self.file.open("a", encoding="utf-8") as file:
                 txt = ";;".join(
-                    str(column).replace("\n", r"\n") for column in row
+                    str(column).replace("\n", r"\n").replace("\r", r"\r")
+                    for column in row
                 )
                 file.write(f"{txt}\n")
 
@@ -835,7 +836,7 @@ class Attribute:
             ), f"invalid table file: {string!r} isn't integer"
             return int(string)
         if self.type_ == AttributeType.STRING:
-            return string.replace(r"\n", "\n")
+            return string.replace(r"\n", "\n").replace(r"\r", "\r")
         raise AssertionError(  # pragma: no cover
             f"invalid attribute: unknown attribute type {self.type_!r}"
         )

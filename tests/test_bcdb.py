@@ -583,7 +583,9 @@ class TestAttribute:
         assert attr.convert_and_verify("-42") == -42
         attr = bcdb.Attribute("testattr", bcdb.AttributeType.STRING)
         assert attr.convert_and_verify("Hello, World!") == "Hello, World!"
-        assert attr.convert_and_verify(r"Hello,\nWorld!") == "Hello,\nWorld!"
+        assert (
+            attr.convert_and_verify(r"Hello,\nWorld\r!") == "Hello,\nWorld\r!"
+        )
 
     @staticmethod
     def test_convert_and_verify_bad() -> None:
