@@ -156,6 +156,121 @@ class TestTable:
             table.get_attribute("notattr")
 
     @staticmethod
+    def test_get_attribute_index(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        attr1 = bcdb.Attribute("attr1", bcdb.AttributeType.FLOAT)
+        attr2 = bcdb.Attribute(
+            "attr2",
+            bcdb.AttributeType.BOOLEAN,
+            bcdb.AttributeRequirements.UNIQUE,
+        )
+        table = db.add_table("table", [attr1, attr2])
+        assert table.get_attribute_index("attr1") == 0
+        assert table.get_attribute_index("attr2") == 1
+        with pytest.raises(AssertionError, match=r"doesn't exist"):
+            table.get_attribute_index("notattr")
+
+    @staticmethod
+    def test_contains(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("attr1", bcdb.AttributeType.STRING),
+                bcdb.Attribute("attr2", bcdb.AttributeType.FLOAT),
+            ],
+        )
+        table.add_rows(
+            [
+                ("", -5.6),
+                ("Hello\nworld\t\r\b\0", 1e6),
+                ("", -5.6),
+                ("How's it goin'?", -0.0),
+            ]
+        )
+        assert table.contains("attr2", -5.6)
+        assert table.contains("attr2", 1e6)
+        assert table.contains("attr2", 0)
+        assert not table.contains("attr2", 69)
+        assert not table.contains("attr2", -42)
+
+    @staticmethod
+    def test_not_contains(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("attr1", bcdb.AttributeType.STRING),
+                bcdb.Attribute("attr2", bcdb.AttributeType.FLOAT),
+            ],
+        )
+        table.add_rows(
+            [
+                ("", -5.6),
+                ("Hello\nworld\t\r\b\0", 1e6),
+                ("", -5.6),
+                ("How's it goin'?", -0.0),
+            ]
+        )
+        assert not table.not_contains("attr2", -5.6)
+        assert not table.not_contains("attr2", 1e6)
+        assert not table.not_contains("attr2", 0)
+        assert table.not_contains("attr2", 69)
+        assert table.not_contains("attr2", -42)
+
+    @staticmethod
+    def test_contains_row(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("attr1", bcdb.AttributeType.STRING),
+                bcdb.Attribute("attr2", bcdb.AttributeType.FLOAT),
+            ],
+        )
+        table.add_rows(
+            [
+                ("", -5.6),
+                ("Hello\nworld\t\r\b\0", 1e6),
+                ("", -5.6),
+                ("How's it goin'?", -0.0),
+            ]
+        )
+        assert table.contains_row(("", -5.6))
+        assert table.contains_row(("Hello\nworld\t\r\b\0", 1e6))
+        assert table.contains_row(("How's it goin'?", -0.0))
+        assert not table.contains_row(("", -0.0))
+        assert not table.contains_row(("N", 1554))
+        assert not table.contains_row(("g'day", 0xC0FFEE))
+        assert not table.contains_row((0xBEEF, 0xC0FFEE))
+
+    @staticmethod
+    def test_not_contains_row(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("attr1", bcdb.AttributeType.STRING),
+                bcdb.Attribute("attr2", bcdb.AttributeType.FLOAT),
+            ],
+        )
+        table.add_rows(
+            [
+                ("", -5.6),
+                ("Hello\nworld\t\r\b\0", 1e6),
+                ("", -5.6),
+                ("How's it goin'?", -0.0),
+            ]
+        )
+        assert not table.not_contains_row(("", -5.6))
+        assert not table.not_contains_row(("Hello\nworld\t\r\b\0", 1e6))
+        assert not table.not_contains_row(("How's it goin'?", -0.0))
+        assert table.not_contains_row(("", -0.0))
+        assert table.not_contains_row(("N", 1554))
+        assert table.not_contains_row(("g'day", 0xC0FFEE))
+        assert table.not_contains_row((0xBEEF, 0xC0FFEE))
+
+    @staticmethod
     def test_verify_from(tmp_path: pathlib.Path) -> None:
         db = bcdb.Database(tmp_path)
         table1 = db.add_table(
@@ -226,7 +341,7 @@ class TestTable:
             table2.verify_from(1, "user_id")
 
     @staticmethod
-    def test_get_and_add_rows(tmp_path: pathlib.Path) -> None:
+    def test_get_rows_and_add_row(tmp_path: pathlib.Path) -> None:
         db = bcdb.Database(tmp_path)
         attrs = [
             bcdb.Attribute(
@@ -258,6 +373,36 @@ class TestTable:
         for row in rows:
             table.add_row(row)  # checking add_row
         assert table.get_rows() == rows  # checking get_rows
+
+    @staticmethod
+    def test_add_rows(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table", [bcdb.Attribute("testattr1", bcdb.AttributeType.FLOAT)]
+        )
+        rows = [
+            (784365.435,),
+            (-0.123784,),
+            (-25.0,),
+            (298345.035,),
+        ]
+        table.add_rows(rows)
+        assert table.get_rows() == rows
+
+        with pytest.raises(AssertionError, match=r"invalid number of columns"):
+            table.add_rows(
+                [
+                    (1.0,),
+                    (
+                        1.0,
+                        2.0,
+                        -3.0,
+                    ),
+                ]
+            )
+
+        with pytest.raises(AssertionError, match=r"invalid number of columns"):
+            table.add_rows([(), (1.0,)])
 
     @staticmethod
     def test_get_rows_notenough(tmp_path: pathlib.Path) -> None:
@@ -383,6 +528,125 @@ class TestTable:
             match=r"exceeded the limit \(-1\) with 0 number of rows removed\.",
         ):
             table.remove_rows(lambda _: True, limit=-1)
+
+    @staticmethod
+    def test_map_1(tmp_path: pathlib.Path) -> None:
+        def _func(row: tuple[int, str]) -> tuple[int, str] | None:
+            return row if row[0] & 1 else None
+
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("a1", bcdb.AttributeType.INTEGER),
+                bcdb.Attribute("a2", bcdb.AttributeType.STRING),
+            ],
+        )
+        table.add_rows(
+            [
+                (1, "hello"),
+                (2, "world"),
+                (3, "quick fox"),
+                (107165, "lazy dog"),
+                (4096, "jump$ over"),
+            ]
+        )
+        expected = [
+            (1, "hello"),
+            (3, "quick fox"),
+            (107165, "lazy dog"),
+        ]
+        assert table.map(_func, write=True) == expected
+        assert table.get_rows() == expected
+
+    @staticmethod
+    def test_map_2(tmp_path: pathlib.Path) -> None:
+        def _func(row: tuple[int, str]) -> tuple[int, str] | None:
+            return (row[0] + 1, "hello")
+
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("a1", bcdb.AttributeType.INTEGER),
+                bcdb.Attribute("a2", bcdb.AttributeType.STRING),
+            ],
+        )
+        table.add_rows(
+            [
+                (1, "hello"),
+                (2, "world"),
+                (3, "quick fox"),
+                (107165, "lazy dog"),
+                (4096, "jump$ over"),
+            ]
+        )
+        expected = [
+            (2, "hello"),
+            (3, "hello"),
+            (4, "hello"),
+            (107166, "hello"),
+            (4097, "hello"),
+        ]
+        assert table.map(_func, write=True) == expected
+        assert table.get_rows() == expected
+
+    @staticmethod
+    def test_map_bad(tmp_path: pathlib.Path) -> None:
+        def _func(_):
+            return "hi"
+
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("a1", bcdb.AttributeType.INTEGER),
+                bcdb.Attribute("a2", bcdb.AttributeType.STRING),
+            ],
+        )
+        rows = [
+            (1, "hello"),
+            (2, "world"),
+            (3, "quick fox"),
+            (107165, "lazy dog"),
+            (4096, "jump$ over"),
+        ]
+        table.add_rows(rows)
+        with pytest.raises(
+            AssertionError,
+            match=r"unknown return value returned by map function",
+        ):
+            assert table.map(_func, write=True)
+        assert table.get_rows() == rows
+
+    @staticmethod
+    def test_filter(tmp_path: pathlib.Path) -> None:
+        def _func(row: tuple[int, str]) -> bool:
+            return row[0] % 2 == 0
+
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("a1", bcdb.AttributeType.INTEGER),
+                bcdb.Attribute("a2", bcdb.AttributeType.STRING),
+            ],
+        )
+        table.add_rows(
+            [
+                (1, "hello"),
+                (2, "world"),
+                (3, "quick fox"),
+                (107165, "lazy dog"),
+                (4096, "jump$ over"),
+            ]
+        )
+        expected = [
+            (2, "world"),
+            (4096, "jump$ over"),
+        ]
+        assert table.filter(_func, write=True) == expected
+        assert table.get_rows() == expected
 
     @staticmethod
     def test_verify_requirements(tmp_path: pathlib.Path) -> None:
