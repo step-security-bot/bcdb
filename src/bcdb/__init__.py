@@ -466,6 +466,7 @@ class Table:
         rows: list[tuple[Any, ...]],
         *,
         i_know_what_im_doing: bool = False,
+        lock: bool = True,
     ) -> None:  # sourcery skip: simplify-boolean-comparison
         """
         Remove ALL rows and replace them with `rows`. Usage is discouraged!
@@ -479,11 +480,13 @@ class Table:
             rows (list[tuple[Any, ...]]): The rows that will be in the file.
             i_know_what_im_doing (bool, optional): Must be True to use this
             function. Defaults to False.
+            lock (bool, optional): Acquire lock before reading/writing. Please
+            don't change it. Defaults to True.
         """
         assert (
             i_know_what_im_doing is True
         ), "You don't know what you are doing."
-        with self.lock:
+        with self.lock if lock else contextlib.nullcontext():
             # remove ALL rows
             with self.file.open("r", encoding="utf-8") as file:
                 # get the first line ("BCDB ...")
@@ -549,7 +552,9 @@ class Table:
                     )
             # * the writing part
             if write:
-                self.write_rows(new_rows, i_know_what_im_doing=True)
+                self.write_rows(
+                    new_rows, i_know_what_im_doing=True, lock=False
+                )
             # * and return
             return new_rows
 
