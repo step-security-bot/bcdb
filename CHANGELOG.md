@@ -16,7 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **! Added `Table.not_contains_row(self: Self@Table, row: tuple[Any, ...]) -> bool`.**
 - Added `Table.add_rows(self: Self@Table, rows: Iterable[tuple[Any, ...]], *, lock: bool = True) -> None`.
 - Added `Table.get_attribute_index(self: Self@Table, name: str) -> int`.
-- Added argument `lock` to `Table.get_rows`. Don't change it!
+
+## Fixed
+
+- **Fixed problem with writing `\n` and `\r` to database.**
+- `Database.add_table` checks that the table's name is unique, and its attributes' names are unique.
 
 ## [0.2.0] - 2022-11-19
 
