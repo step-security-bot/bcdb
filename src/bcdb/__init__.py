@@ -31,7 +31,7 @@ import functools
 import pathlib
 import string as stringlib
 import threading
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Collection, Iterable
 
 from typing_extensions import Self, TypeAlias
 
@@ -39,6 +39,19 @@ if not __debug__:
     raise Exception("BCDB cannot be used with the -O flag")
 
 Where: TypeAlias = Callable[[tuple[Any, ...]], bool]
+
+
+def unique(iterable: Collection[Any]) -> bool:
+    # v probably slower but should work
+    # // seen: list[Any] = []
+    # // for obj in iterable:
+    # //     if obj in iterable:
+    # //         return False
+    # //     seen.append(obj)
+    # // return True
+
+    # * probably faster
+    return len(iterable) == len(set(iterable))
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -157,7 +170,7 @@ class Table:
         for rownum, row in enumerate(self.get_rows(), 2):
             try:
                 column = row[attr_idx]
-            except IndexError as exc:
+            except IndexError as exc:  # pragma: no cover
                 raise AssertionError(
                     f"invalid row at line {rownum}: doesn't have a column"
                     f" {attr_idx} (attribute {attribute_name})"
@@ -959,6 +972,12 @@ class Database:
             f" {table_attributes!r}"
         )
         assert table_attributes, "invalid table attributes: empty"
+        assert unique(
+            self.tables + [table_name]
+        ), "invalid table name: already exists"
+        assert unique(
+            [attr.name for attr in table_attributes]
+        ), "invalid table attributes: an attribute name was reused"
         table_path = self.directory / table_name
         assert not table_path.exists(), "table with that name already exists"
         table_path.write_text(
