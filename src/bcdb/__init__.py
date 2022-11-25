@@ -142,7 +142,8 @@ class Table:
         """
         try:
             return self.attributes.index(self.get_attribute(name))
-        except ValueError as exc:
+        except ValueError as exc:  # pragma: no cover
+            # theoretically this can never happen
             raise AssertionError(
                 f"invalid attribute with name {name}: doesn't exist"
             ) from exc
@@ -169,6 +170,11 @@ class Table:
         """
         Check if any rows's `attribute_name` column has `attribute_value`.
 
+        If you would like to check an entire row see `contains_row` instead.
+
+        If you would like to check that no rows have `attribute_value` see
+        `not_contains` instead.
+
         Args:
             attribute_name (str): The attribute's (column's) name
             attribute_value (Any): The value to search for.
@@ -188,7 +194,13 @@ class Table:
 
     def not_contains(self, attribute_name: str, attribute_value: Any) -> bool:
         """
-        Check if no rows's `attribute_name` column has `attribute_value`.
+        Check that no rows's `attribute_name` column has `attribute_value`.
+
+        If you would like to check an entire row see `not_contains_row`
+        instead.
+
+        If you would like to check that a row has `attribute_value` see
+        `contains` instead.
 
         Args:
             attribute_name (str): The attribute's (column's) name
@@ -220,6 +232,11 @@ class Table:
         """
         Return True if `row` is in the table.
 
+        If you would like to check only one column see `contains` instead.
+
+        If you would like to check that no rows are `row` see
+        `not_contains_row` instead.
+
         Args:
             row (tuple[Any, ...]): The row to look out for.
 
@@ -231,6 +248,11 @@ class Table:
     def not_contains_row(self, row: tuple[Any, ...]) -> bool:
         """
         Return False if `row` is in the table.
+
+        If you would like to check only one column see `not_contains` instead.
+
+        If you would like to check that a row is `row` see
+        `contains_row` instead.
 
         Args:
             row (tuple[Any, ...]): The row to look out for.
