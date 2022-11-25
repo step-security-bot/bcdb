@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-11-25
+
 ## Added
 
 - **! Added `Table.contains(self: Self@Table, attribute_name: str, attribute_value: Any) -> bool`.**
