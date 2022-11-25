@@ -338,7 +338,10 @@ class Table:
             attr.verify_before_writing(column)
         with self.lock if lock else contextlib.nullcontext():
             with self.file.open("a", encoding="utf-8") as file:
-                file.write(f"{';;'.join(str(column) for column in row)}\n")
+                txt = ";;".join(
+                    str(column).replace("\n", r"\n") for column in row
+                )
+                file.write(f"{txt}\n")
 
     def add_rows(
         self, rows: Iterable[tuple[Any, ...]], *, lock: bool = True
@@ -832,7 +835,7 @@ class Attribute:
             ), f"invalid table file: {string!r} isn't integer"
             return int(string)
         if self.type_ == AttributeType.STRING:
-            return string
+            return string.replace(r"\n", "\n")
         raise AssertionError(  # pragma: no cover
             f"invalid attribute: unknown attribute type {self.type_!r}"
         )
