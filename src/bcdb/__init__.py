@@ -585,6 +585,49 @@ class Table:
 
         return self.map(_func, write=write)
 
+    def get_row_where(
+        self, attribute_name: str, attribute_value: Any
+    ) -> tuple[Any, ...]:
+        """
+        Get the row where the column at `attribute_name` is `attribute_value`.
+
+        Args:
+            attribute_name (str): The attribute's (column's) name.
+            attribute_value (Any): Its value.
+
+        Raises:
+            AssertionError: If there are no rows that match
+            AssertionError: If there are multiple rows that match
+
+            Other exceptions may be raised by other
+            functions (get_attribute_index, filter) called by this function.
+
+        Returns:
+            tuple[Any, ...]: The row
+        """
+        attr_idx = self.get_attribute_index(attribute_name)
+
+        def _func(row: tuple[Any, ...]) -> bool:
+            # ? for some reason mypy yells at us?
+            # error: Returning Any from function declared to return "bool"
+            return (  # type: ignore[no-any-return]
+                row[attr_idx] == attribute_value
+            )
+
+        rv = self.filter(_func)
+
+        if len(rv) < 1:
+            raise AssertionError(
+                f"no rows have {attribute_value} at column {attr_idx}"
+                f" ({attribute_name})"
+            )
+        elif len(rv) > 1:
+            raise AssertionError(
+                f"multiple rows have {attribute_value} at column {attr_idx}"
+                f" ({attribute_name})"
+            )
+        return rv[0]
+
     def verify_from(self, obj: Any, attribute: "str | Attribute") -> None:
         """
         Verify attribute.from_ (".from_", "from_", "from").
