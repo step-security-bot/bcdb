@@ -649,6 +649,66 @@ class TestTable:
         assert table.get_rows() == expected
 
     @staticmethod
+    def test_get_row_where(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("a1", bcdb.AttributeType.INTEGER),
+                bcdb.Attribute("a2", bcdb.AttributeType.STRING),
+            ],
+        )
+        table.add_rows(
+            [
+                (1, "hello"),
+                (2, "world"),
+                (1, "quick fox"),
+                (1, "lazy dog"),
+                (4096, "jump$ over"),
+            ]
+        )
+        assert table.get_row_where("a1", 2) == (2, "world")
+        assert table.get_row_where("a2", "jump$ over") == (4096, "jump$ over")
+        with pytest.raises(AssertionError, match=r"multiple rows have"):
+            table.get_row_where("a1", 1)
+        with pytest.raises(AssertionError, match=r"no rows have"):
+            table.get_row_where("a1", -1)
+
+    @staticmethod
+    def test_get_rows_where(tmp_path: pathlib.Path) -> None:
+        db = bcdb.Database(tmp_path)
+        table = db.add_table(
+            "table",
+            [
+                bcdb.Attribute("a1", bcdb.AttributeType.INTEGER),
+                bcdb.Attribute("a2", bcdb.AttributeType.STRING),
+            ],
+        )
+        table.add_rows(
+            [
+                (1, "hello"),
+                (2, "world"),
+                (1, "quick fox"),
+                (1, "lazy dog"),
+                (4096, "jump$ over"),
+            ]
+        )
+        assert table.get_rows_where("a1", 2) == [(2, "world")]
+        assert table.get_rows_where("a2", "jump$ over") == [
+            (4096, "jump$ over")
+        ]
+        assert table.get_rows_where("a1", 1) == [
+            (1, "hello"),
+            (1, "quick fox"),
+            (1, "lazy dog"),
+        ]
+        assert (
+            table.get_rows_where("a1", -1, True) == []  # pylint: disable=C1803
+        )
+        with pytest.raises(AssertionError, match=r"no rows have"):
+            table.get_rows_where("a1", -1)
+
+    @staticmethod
     def test_verify_requirements(tmp_path: pathlib.Path) -> None:
         db = bcdb.Database(tmp_path)
         attrs = [
