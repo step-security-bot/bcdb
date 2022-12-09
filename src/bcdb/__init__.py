@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-__version__ = "0.3.0"
+__version__ = "0.4.0-beta.1"
 __author__ = "Koviubi56"
 __email__ = "koviubi56@duck.com"
 __license__ = "GNU GPLv3"
@@ -627,6 +627,48 @@ class Table:
                 f" ({attribute_name})"
             )
         return rv[0]
+
+    def get_rows_where(
+        self,
+        attribute_name: str,
+        attribute_value: Any,
+        allow_empty: bool = False,
+    ) -> list[tuple[Any, ...]]:
+        """
+        Get all rows where the column at `attribute_name` is `attribute_value`.
+
+        Args:
+            attribute_name (str): The attribute's (column's) name.
+            attribute_value (Any): Its value.
+            allow_empty (bool, optional): Allow empty results? Defaults to
+            False.
+
+        Raises:
+            AssertionError: If there are no rows that match and `allow_empty`
+
+            Other exceptions may be raised by other
+            functions (get_attribute_index, filter) called by this function.
+
+        Returns:
+            list[tuple[Any, ...]]: The rows
+        """
+        attr_idx = self.get_attribute_index(attribute_name)
+
+        def _func(row: tuple[Any, ...]) -> bool:
+            # ? for some reason mypy yells at us?
+            # error: Returning Any from function declared to return "bool"
+            return (  # type: ignore[no-any-return]
+                row[attr_idx] == attribute_value
+            )
+
+        rv = self.filter(_func)
+
+        if (len(rv) < 1) and (not allow_empty):
+            raise AssertionError(
+                f"no rows have {attribute_value} at column {attr_idx}"
+                f" ({attribute_name})"
+            )
+        return rv
 
     def verify_from(self, obj: Any, attribute: "str | Attribute") -> None:
         """
