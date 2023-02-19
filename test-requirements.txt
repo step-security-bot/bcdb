@@ -1,4 +1,4 @@
 -e .
 -r requirements.txt
-coverage
 pytest-randomly
+tox

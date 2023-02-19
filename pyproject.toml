@@ -4,3 +4,26 @@ build-backend = "setuptools.build_meta"
 
 [tool.isort]
 profile = "black"
+
+[[tool.lemming.formatters]]
+packages = ["black"]
+format_command = "{pyexe} -m black -l 79 {path}"
+check_command = "{pyexe} -m black -l 79 --check {path}"
+
+[[tool.lemming.formatters]]
+packages = ["setup_cfg_fmt"]
+format_command = "{pyexe} -m setup_cfg_fmt --include-version-classifiers"
+# no check
+
+[[tool.lemming.formatters]]
+packages = ["isort"]
+format_command = "{pyexe} -m isort --profile black {path}"
+check_command = "{pyexe} -m isort --profile black --check {path}"
+
+[[tool.lemming.linters]]
+packages = ["flake8", "flake8-bandit"]
+command = "{pyexe} -m flake8 --count --exclude *venv* --show-source --statistics --extend-ignore=W503,S101 {path}"
+
+[[tool.lemming.linters]]
+packages = ["pyroma"]
+command = "{pyexe} -m pyroma {path}"
