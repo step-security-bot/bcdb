@@ -10,13 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@18bf8ad2ca49c14cbb28b91346d626ccfb00c518 # v2.1.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - uses: actions/cache@6998d139ddd3e68c71e9e398d8e40b71a2f39812 # v3.2.5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
           python-version: "3.11"
       - name: Install Lemming
