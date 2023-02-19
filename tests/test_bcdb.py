@@ -1006,9 +1006,8 @@ class TestDatabase:
         t3 = db.add_table(
             "t3", [bcdb.Attribute("attr", bcdb.AttributeType.FLOAT)]
         )
-        assert db.tables[0] == t1
-        assert db.tables[1] == t2
-        assert db.tables[2] == t3
+        assert set(db.tables) == {t1, t2, t3}
+        # sets are unsorted
 
     @staticmethod
     def test_add_table(tmp_path: pathlib.Path) -> None:
@@ -1033,8 +1032,8 @@ class TestDatabase:
                 ),
             ],
         )
-        assert db.tables[0] == t1
-        assert db.tables[1] == t2
+        assert set(db.tables) == {t1, t2}
+        # sets are unsorted
 
     @staticmethod
     def test_add_table_bad(tmp_path: pathlib.Path) -> None:
